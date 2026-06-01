@@ -9,6 +9,7 @@ import { Link } from 'react-router-dom';
 import { useGetProfileQuery, useListProfilesQuery } from '#services/deepRacer/profileApi.js';
 import { checkUserGroupMembership } from '#utils/authUtils.js';
 
+import { BatchInviteUsersModal, BatchUpdateUsersModal } from './BatchOperations';
 import ChangeUserRoleModal from './ChangeUserRoleModal';
 import DeleteUserModal from './DeleteUserModal';
 import DeleteUserModelsModal from './DeleteUserModelsModal';
@@ -25,6 +26,8 @@ const ManageInstance = () => {
   const [isInstanceQuotasModalOpen, setIsInstanceQuotasModalOpen] = useState<boolean>(false);
   const [isNewUserQuotasModalOpen, setIsNewUserQuotasModalOpen] = useState<boolean>(false);
   const [isInviteUserModalOpen, setIsInviteUserModalOpen] = useState<boolean>(false);
+  const [isBatchInviteUsersModalOpen, setIsBatchInviteUsersModalOpen] = useState<boolean>(false);
+  const [isBatchUpdateUsersModalOpen, setIsBatchUpdateUsersModalOpen] = useState<boolean>(false);
   const [isDeleteUserModalOpen, setIsDeleteUserModalOpen] = useState<boolean>(false);
   const [isDeleteUserModelsModalOpen, setIsDeleteUserModelsModalOpen] = useState<boolean>(false);
   const [isUserQuotasModalOpen, setIsUserQuotasModalOpen] = useState<boolean>(false);
@@ -33,6 +36,7 @@ const ManageInstance = () => {
   const [selectedUserForModelsDelete, setSelectedUserForModelsDelete] = useState<Profile | null>(null);
   const [selectedUserForQuotas, setSelectedUserForQuotas] = useState<Profile | null>(null);
   const [selectedUserForRoleChange, setSelectedUserForRoleChange] = useState<Profile | null>(null);
+  const [selectedUsersForBatchUpdate, setSelectedUsersForBatchUpdate] = useState<Profile[]>([]);
   const [clearTableSelection, setClearTableSelection] = useState<(() => void) | null>(null);
 
   const profiles = useListProfilesQuery();
@@ -75,6 +79,7 @@ const ManageInstance = () => {
                 <SpaceBetween direction="horizontal" size="xs">
                   <Button onClick={() => setIsInstanceQuotasModalOpen(true)}>Instance quotas</Button>
                   <Button onClick={() => setIsNewUserQuotasModalOpen(true)}>New user quotas</Button>
+                  <Button onClick={() => setIsBatchInviteUsersModalOpen(true)}>Batch invite users</Button>
                 </SpaceBetween>
               }
             >
@@ -106,6 +111,11 @@ const ManageInstance = () => {
                 setClearTableSelection(() => clearSelection);
                 setIsChangeUserRoleModalOpen(true);
               }}
+              onBatchUpdateUsers={(users: Profile[], clearSelection: () => void) => {
+                setSelectedUsersForBatchUpdate(users);
+                setClearTableSelection(() => clearSelection);
+                setIsBatchUpdateUsersModalOpen(true);
+              }}
             />
           </SpaceBetween>
         }
@@ -114,6 +124,13 @@ const ManageInstance = () => {
         toolsHide
       />
       <InviteUserModal isOpen={isInviteUserModalOpen} setIsOpen={setIsInviteUserModalOpen} />
+      <BatchInviteUsersModal isOpen={isBatchInviteUsersModalOpen} setIsOpen={setIsBatchInviteUsersModalOpen} />
+      <BatchUpdateUsersModal
+        isOpen={isBatchUpdateUsersModalOpen}
+        setIsOpen={setIsBatchUpdateUsersModalOpen}
+        selectedUsers={selectedUsersForBatchUpdate}
+        onClearSelection={clearTableSelection}
+      />
       <DeleteUserModal
         isOpen={isDeleteUserModalOpen}
         setIsOpen={setIsDeleteUserModalOpen}

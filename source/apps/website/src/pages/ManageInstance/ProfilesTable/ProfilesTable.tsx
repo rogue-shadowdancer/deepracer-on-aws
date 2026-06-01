@@ -32,6 +32,7 @@ interface ProfilesTableProps {
   onDeleteUserModels: (user: Profile) => void;
   onUpdateUserQuotas: (user: Profile, clearSelection: () => void) => void;
   onChangeUserRole: (user: Profile, clearSelection: () => void) => void;
+  onBatchUpdateUsers?: (users: Profile[], clearSelection: () => void) => void;
 }
 
 const ProfilesTable = ({
@@ -42,6 +43,7 @@ const ProfilesTable = ({
   onDeleteUserModels,
   onUpdateUserQuotas,
   onChangeUserRole,
+  onBatchUpdateUsers,
 }: ProfilesTableProps) => {
   const [filterText, setFilterText] = useState('');
   const [selectedItems, setSelectedItems] = useState<Profile[]>([]);
@@ -180,6 +182,11 @@ const ProfilesTable = ({
               <ButtonDropdown
                 items={[
                   { text: 'Invite user', disabled: selectedItems.length > 0, id: 'invite' },
+                  {
+                    text: 'Batch update users',
+                    disabled: !onBatchUpdateUsers || selectedItems.length === 0,
+                    id: 'batch-update',
+                  },
                   { text: 'Change role', disabled: isChangeRoleDisabled(), id: 'change-role' },
                   { text: 'Update usage quotas', disabled: selectedItems.length !== 1, id: 'update-quotas' },
                   { text: 'Delete models', disabled: selectedItems.length !== 1, id: 'delete-models' },
@@ -188,6 +195,8 @@ const ProfilesTable = ({
                 onItemClick={({ detail }) => {
                   if (detail.id === 'invite') {
                     onInviteUser();
+                  } else if (detail.id === 'batch-update' && selectedItems.length > 0) {
+                    onBatchUpdateUsers?.(selectedItems, clearSelection);
                   } else if (detail.id === 'change-role' && selectedItems.length === 1) {
                     onChangeUserRole(selectedItems[0], clearSelection);
                   } else if (detail.id === 'delete-user' && selectedItems.length === 1) {

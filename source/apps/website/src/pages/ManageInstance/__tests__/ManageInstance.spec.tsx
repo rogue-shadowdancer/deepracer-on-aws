@@ -28,6 +28,7 @@ vi.mock('../ProfilesTable/ProfilesTable', () => ({
     onDeleteUserModels,
     onUpdateUserQuotas,
     onChangeUserRole,
+    onBatchUpdateUsers,
     profiles,
     currentUserProfileId,
   }: {
@@ -36,6 +37,7 @@ vi.mock('../ProfilesTable/ProfilesTable', () => ({
     onDeleteUserModels: (user: Profile) => void;
     onUpdateUserQuotas: (user: Profile, clearSelection: () => void) => void;
     onChangeUserRole: (user: Profile, clearSelection: () => void) => void;
+    onBatchUpdateUsers: (users: Profile[], clearSelection: () => void) => void;
     profiles: Profile[];
     currentUserProfileId?: string;
   }) => (
@@ -43,6 +45,12 @@ vi.mock('../ProfilesTable/ProfilesTable', () => ({
       Profiles Table
       <button onClick={onInviteUser} data-testid="invite-user-button">
         Invite User
+      </button>
+      <button
+        onClick={() => onBatchUpdateUsers(profiles, () => console.log('Clear selection called'))}
+        data-testid="batch-update-users-button"
+      >
+        Batch Update Users
       </button>
       {profiles.map((profile) => (
         <div key={profile.profileId} data-testid={`profile-${profile.alias}`}>
@@ -101,6 +109,40 @@ vi.mock('../InviteUserModal/InviteUserModal', () => ({
     <div data-testid="invite-user-modal" data-is-open={isOpen}>
       Invite User Modal
       <button onClick={() => setIsOpen(false)}>Close</button>
+    </div>
+  ),
+}));
+
+vi.mock('../BatchOperations', () => ({
+  BatchInviteUsersModal: ({ isOpen, setIsOpen }: { isOpen: boolean; setIsOpen: (open: boolean) => void }) => (
+    <div data-testid="batch-invite-users-modal" data-is-open={isOpen}>
+      Batch Invite Users Modal
+      <button onClick={() => setIsOpen(false)}>Close</button>
+    </div>
+  ),
+  BatchUpdateUsersModal: ({
+    isOpen,
+    setIsOpen,
+    selectedUsers,
+    onClearSelection,
+  }: {
+    isOpen: boolean;
+    setIsOpen: (open: boolean) => void;
+    selectedUsers: Profile[];
+    onClearSelection?: (() => void) | null;
+  }) => (
+    <div data-testid="batch-update-users-modal" data-is-open={isOpen} data-selected-count={selectedUsers.length}>
+      Batch Update Users Modal
+      <button onClick={() => setIsOpen(false)}>Close</button>
+      <button
+        onClick={() => {
+          if (onClearSelection) onClearSelection();
+          setIsOpen(false);
+        }}
+        data-testid="batch-update-clear-selection-button"
+      >
+        Clear Selection
+      </button>
     </div>
   ),
 }));
@@ -1206,5 +1248,64 @@ describe('ManageInstance', () => {
     const modal = screen.getByTestId('change-user-role-modal');
     expect(modal).toHaveAttribute('data-is-open', 'true');
     expect(modal).toHaveAttribute('data-selected-user', 'testuser');
+  });
+
+  it('should open BatchInviteUsersModal from the header action', async () => {
+    const user = userEvent.setup();
+
+    (fetchAuthSession as Mock).mockResolvedValue({
+      tokens: {
+        accessToken: {
+          payload: {
+            'cognito:groups': ['dr-admins'],
+          },
+        },
+      },
+    });
+
+    render(<ManageInstance />);
+
+    await waitFor(() => {
+      expect(screen.getByText('Instance management')).toBeInTheDocument();
+    });
+
+    await user.click(screen.getByText('Batch invite users'));
+
+    expect(screen.getByTestId('batch-invite-users-modal')).toHaveAttribute('data-is-open', 'true');
+  });
+
+  it('should open BatchUpdateUsersModal with selected users from ProfilesTable', async () => {
+    const user = userEvent.setup();
+    const mockProfiles = [
+      { alias: 'user1', avatar: 'avatar1', profileId: '1' } as Profile,
+      { alias: 'user2', avatar: 'avatar2', profileId: '2' } as Profile,
+    ];
+
+    (fetchAuthSession as Mock).mockResolvedValue({
+      tokens: {
+        accessToken: {
+          payload: {
+            'cognito:groups': ['dr-admins'],
+          },
+        },
+      },
+    });
+
+    (useListProfilesQuery as Mock).mockReturnValue({
+      data: mockProfiles,
+      isLoading: false,
+      error: null,
+    });
+
+    render(<ManageInstance />);
+
+    await waitFor(() => {
+      expect(screen.getByText('Instance management')).toBeInTheDocument();
+    });
+
+    await user.click(screen.getByTestId('batch-update-users-button'));
+
+    expect(screen.getByTestId('batch-update-users-modal')).toHaveAttribute('data-is-open', 'true');
+    expect(screen.getByTestId('batch-update-users-modal')).toHaveAttribute('data-selected-count', '2');
   });
 });

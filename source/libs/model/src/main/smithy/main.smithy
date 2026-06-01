@@ -87,6 +87,8 @@ resource ProfileResource {
     operations: [
         ListProfiles
         CreateProfile
+        BatchCreateProfiles
+        BatchUpdateProfiles
         UpdateGroupMembership
         DeleteProfileModels
     ]

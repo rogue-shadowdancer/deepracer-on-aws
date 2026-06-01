@@ -61,6 +61,7 @@ describe('ProfilesTable', () => {
   const mockOnDeleteUserModels = vi.fn();
   const mockOnUpdateUserQuotas = vi.fn();
   const mockOnChangeUserRole = vi.fn();
+  const mockOnBatchUpdateUsers = vi.fn();
 
   beforeEach(() => {
     vi.clearAllMocks();
@@ -671,6 +672,34 @@ describe('ProfilesTable', () => {
     await user.click(updateQuotasOption);
 
     expect(mockOnUpdateUserQuotas).not.toHaveBeenCalled();
+  });
+
+  it('calls onBatchUpdateUsers when batch update action is clicked with selected users', async () => {
+    const user = userEvent.setup();
+    render(
+      <ProfilesTable
+        profiles={mockProfiles}
+        onInviteUser={mockOnInviteUser}
+        onDeleteUser={mockOnDeleteUser}
+        onDeleteUserModels={mockOnDeleteUserModels}
+        onUpdateUserQuotas={mockOnUpdateUserQuotas}
+        onChangeUserRole={mockOnChangeUserRole}
+        onBatchUpdateUsers={mockOnBatchUpdateUsers}
+      />,
+    );
+
+    const checkboxes = screen.getAllByRole('checkbox');
+    await user.click(checkboxes[1]);
+    await user.click(checkboxes[2]);
+
+    const actionsButton = screen.getByText('Actions');
+    await user.click(actionsButton);
+
+    const batchUpdateOption = screen.getByText('Batch update users');
+    await user.click(batchUpdateOption);
+
+    expect(mockOnBatchUpdateUsers).toHaveBeenCalledTimes(1);
+    expect(mockOnBatchUpdateUsers).toHaveBeenCalledWith(mockProfiles, expect.any(Function));
   });
 
   it('clearSelection callback clears selected items', async () => {

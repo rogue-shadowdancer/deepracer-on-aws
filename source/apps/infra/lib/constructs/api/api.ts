@@ -73,6 +73,8 @@ export class Api extends Construct {
 
     // Entry points for api lambda handlers in the lambda lib
     const apiHandlerEntryPoints = {
+      BatchCreateProfiles: 'api/handlers/batchCreateProfiles',
+      BatchUpdateProfiles: 'api/handlers/batchUpdateProfiles',
       UpdateGroupMembership: 'api/handlers/updateGroupMembership',
       CreateEvaluation: 'api/handlers/createEvaluation',
       CreateLeaderboard: 'api/handlers/createLeaderboard',
@@ -340,8 +342,33 @@ export class Api extends Construct {
         }),
       );
 
+      // Grant BatchCreateProfiles function permission to create users and assign initial roles
+      functions.BatchCreateProfiles.addToRolePolicy(
+        new PolicyStatement({
+          actions: [
+            'cognito-idp:AdminCreateUser',
+            'cognito-idp:AdminAddUserToGroup',
+            'cognito-idp:AdminDeleteUser',
+            'cognito-idp:AdminListGroupsForUser',
+          ],
+          resources: [props.userPool.userPoolArn],
+        }),
+      );
+
       // Grant UpdateGroupMembership function permission to manage user groups
       functions.UpdateGroupMembership.addToRolePolicy(
+        new PolicyStatement({
+          actions: [
+            'cognito-idp:AdminAddUserToGroup',
+            'cognito-idp:AdminRemoveUserFromGroup',
+            'cognito-idp:AdminListGroupsForUser',
+          ],
+          resources: [props.userPool.userPoolArn],
+        }),
+      );
+
+      // Grant BatchUpdateProfiles function permission to manage user groups
+      functions.BatchUpdateProfiles.addToRolePolicy(
         new PolicyStatement({
           actions: [
             'cognito-idp:AdminAddUserToGroup',

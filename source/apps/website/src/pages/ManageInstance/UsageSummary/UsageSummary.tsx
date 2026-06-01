@@ -25,6 +25,9 @@ const UsageSummary = ({ profiles }: { profiles: Profile[] }) => {
   const { data: newUserModelCountLimit } = useGetGlobalSettingQuery({
     key: 'usageQuotas.newUser.newUserModelCountLimit',
   });
+  const { data: registrationType } = useGetGlobalSettingQuery({
+    key: 'registration.type',
+  });
 
   return (
     <Container header={<Header variant="h2">Usage summary</Header>} data-testid="usage-summary">
@@ -139,7 +142,7 @@ const UsageSummary = ({ profiles }: { profiles: Profile[] }) => {
                     <Icon name="status-info" size="medium" />
                   </Popover>
                 </SpaceBetween>
-                <Box variant="p">Invite only</Box>
+                <Box variant="p">{formatRegistrationType(registrationType)}</Box>
               </Box>
             </SpaceBetween>
           </div>
@@ -234,6 +237,17 @@ const UsageSummary = ({ profiles }: { profiles: Profile[] }) => {
       </SpaceBetween>
     </Container>
   );
+};
+
+const formatRegistrationType = (registrationType?: string) => {
+  switch (registrationType) {
+    case 'self-service':
+      return 'Self service';
+    case 'invite-only':
+      return 'Invite only';
+    default:
+      return '-/-';
+  }
 };
 
 export default UsageSummary;

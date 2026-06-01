@@ -3,6 +3,13 @@
 
 import {
   AvatarConfig,
+  BatchCreateProfilesCommand,
+  BatchCreateProfilesCommandInput,
+  BatchCreateProfilesCommandOutput,
+  BatchProfileOperationStatus,
+  BatchUpdateProfilesCommand,
+  BatchUpdateProfilesCommandInput,
+  BatchUpdateProfilesCommandOutput,
   CreateProfileCommand,
   CreateProfileCommandInput,
   CreateProfileCommandOutput,
@@ -305,6 +312,120 @@ describe('profileApi', () => {
     it('should export useUpdateGroupMembershipMutation hook', () => {
       expect(profileApiModule.profileApi.useUpdateGroupMembershipMutation).toBeDefined();
       expect(typeof profileApiModule.profileApi.useUpdateGroupMembershipMutation).toBe('function');
+    });
+  });
+
+  describe('batchCreateProfilesCommand', () => {
+    it('should create a BatchCreateProfilesCommand with input', () => {
+      const input: BatchCreateProfilesCommandInput = {
+        profiles: [
+          {
+            rowNumber: 2,
+            emailAddress: 'student@example.com',
+            role: UserGroups.RACERS,
+            maxTotalComputeMinutes: 120,
+            maxModelCount: 5,
+          },
+        ],
+      };
+
+      const result = profileApiModule.batchCreateProfiles.batchCreateProfilesCommand(input);
+
+      expect(result.command).toBeInstanceOf(BatchCreateProfilesCommand);
+      expect(result.command.input).toEqual(input);
+      expect(result.displayNotificationOnError).toBe(false);
+    });
+  });
+
+  describe('batchCreateProfilesTransformResponse', () => {
+    it('should transform response to summary and results', () => {
+      const mockResponse: BatchCreateProfilesCommandOutput = {
+        $metadata: {},
+        summary: {
+          total: 1,
+          succeeded: 1,
+          failed: 0,
+        },
+        results: [
+          {
+            rowNumber: 2,
+            emailAddress: 'student@example.com',
+            status: BatchProfileOperationStatus.SUCCEEDED,
+            message: 'Created',
+          },
+        ],
+      };
+
+      const result = profileApiModule.batchCreateProfiles.batchCreateProfilesTransformResponse(mockResponse);
+
+      expect(result).toEqual({
+        summary: mockResponse.summary,
+        results: mockResponse.results,
+      });
+    });
+  });
+
+  describe('batchUpdateProfilesCommand', () => {
+    it('should create a BatchUpdateProfilesCommand with input', () => {
+      const input: BatchUpdateProfilesCommandInput = {
+        updates: [
+          {
+            rowNumber: 1,
+            profileId: 'profile-1',
+            role: UserGroups.RACE_FACILITATORS,
+            maxTotalComputeMinutes: -1,
+            maxModelCount: 10,
+          },
+        ],
+      };
+
+      const result = profileApiModule.batchUpdateProfiles.batchUpdateProfilesCommand(input);
+
+      expect(result.command).toBeInstanceOf(BatchUpdateProfilesCommand);
+      expect(result.command.input).toEqual(input);
+      expect(result.displayNotificationOnError).toBe(false);
+    });
+  });
+
+  describe('batchUpdateProfilesTransformResponse', () => {
+    it('should transform response to summary and results', () => {
+      const mockResponse: BatchUpdateProfilesCommandOutput = {
+        $metadata: {},
+        summary: {
+          total: 1,
+          succeeded: 0,
+          failed: 1,
+        },
+        results: [
+          {
+            rowNumber: 1,
+            profileId: 'profile-1',
+            status: BatchProfileOperationStatus.FAILED,
+            message: 'Cannot change own role.',
+          },
+        ],
+      };
+
+      const result = profileApiModule.batchUpdateProfiles.batchUpdateProfilesTransformResponse(mockResponse);
+
+      expect(result).toEqual({
+        summary: mockResponse.summary,
+        results: mockResponse.results,
+      });
+    });
+  });
+
+  describe('batch profile endpoints', () => {
+    it('should define batch endpoints', () => {
+      expect(profileApiModule.profileApi.endpoints.batchCreateProfiles).toBeDefined();
+      expect(profileApiModule.profileApi.endpoints.batchUpdateProfiles).toBeDefined();
+    });
+
+    it('should export batch mutation hooks', () => {
+      expect(profileApiModule.profileApi.useBatchCreateProfilesMutation).toBeDefined();
+      expect(typeof profileApiModule.profileApi.useBatchCreateProfilesMutation).toBe('function');
+      expect(profileApiModule.profileApi.useBatchUpdateProfilesMutation).toBeDefined();
+      expect(typeof profileApiModule.profileApi.useBatchUpdateProfilesMutation).toBe('function');
     });
   });
 

@@ -12,14 +12,14 @@
       "inputs": ["{projectRoot}/src/**/*", "{projectRoot}/smithy-build-gradle.json"],
       "outputs": ["{projectRoot}/build/**/*"],
       "options": {
-        "command": "./gradlew clean build",
+        "command": "node -e \"const { spawnSync } = require('node:child_process'); const cmd = process.platform === 'win32' ? 'gradlew.bat' : './gradlew'; const result = spawnSync(cmd, ['clean', 'build'], { stdio: 'inherit', shell: process.platform === 'win32' }); process.exit(result.status ?? 1);\"",
         "cwd": "libs/model"
       }
     },
     "clean": {
       "executor": "nx:run-commands",
       "options": {
-        "command": "rm -rf build",
+        "command": "node -e \"require('node:fs').rmSync('build', { recursive: true, force: true });\"",
         "cwd": "libs/model"
       }
     },
@@ -29,8 +29,7 @@
       "inputs": ["{projectRoot}/src/**/*", "{projectRoot}/smithy-build-gradle.json"],
       "outputs": ["{workspaceRoot}/libs/typescript-client/src/**/*"],
       "options": {
-        "command": "cp -r src '../../../../../../typescript-client'",
-        "cwd": "libs/model/build/smithyprojections/model/source/typescript-codegen"
+        "command": "node libs/model/scripts/copy-generated-typescript.mjs libs/model/build/smithyprojections/model/source/typescript-codegen/src libs/typescript-client/src client"
       },
       "dependsOn": ["generate"]
     },
@@ -40,8 +39,7 @@
       "inputs": ["{projectRoot}/src/**/*", "{projectRoot}/smithy-build-gradle.json"],
       "outputs": ["{workspaceRoot}/libs/typescript-server-client/src/**/*"],
       "options": {
-        "command": "cp -r src '../../../../../../typescript-server-client'",
-        "cwd": "libs/model/build/smithyprojections/model/source/typescript-ssdk-codegen"
+        "command": "node libs/model/scripts/copy-generated-typescript.mjs libs/model/build/smithyprojections/model/source/typescript-ssdk-codegen/src libs/typescript-server-client/src server"
       },
       "dependsOn": ["generate"]
     },

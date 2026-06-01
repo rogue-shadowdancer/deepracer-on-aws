@@ -2,6 +2,12 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import {
+  BatchCreateProfilesCommand,
+  BatchCreateProfilesCommandInput,
+  BatchCreateProfilesCommandOutput,
+  BatchUpdateProfilesCommand,
+  BatchUpdateProfilesCommandInput,
+  BatchUpdateProfilesCommandOutput,
   CreateProfileCommand,
   CreateProfileCommandInput,
   CreateProfileCommandOutput,
@@ -74,6 +80,28 @@ export const updateGroupMembership = {
   updateGroupMembershipTransformResponse: (response: UpdateGroupMembershipCommandOutput) => undefined,
 };
 
+export const batchCreateProfiles = {
+  batchCreateProfilesCommand: (input: BatchCreateProfilesCommandInput) => ({
+    command: new BatchCreateProfilesCommand(input),
+    displayNotificationOnError: false,
+  }),
+  batchCreateProfilesTransformResponse: (response: BatchCreateProfilesCommandOutput) => ({
+    summary: response.summary,
+    results: response.results,
+  }),
+};
+
+export const batchUpdateProfiles = {
+  batchUpdateProfilesCommand: (input: BatchUpdateProfilesCommandInput) => ({
+    command: new BatchUpdateProfilesCommand(input),
+    displayNotificationOnError: false,
+  }),
+  batchUpdateProfilesTransformResponse: (response: BatchUpdateProfilesCommandOutput) => ({
+    summary: response.summary,
+    results: response.results,
+  }),
+};
+
 export const profileApi = deepRacerApi.injectEndpoints({
   endpoints: (build) => ({
     createProfile: build.mutation<string, CreateProfileCommandInput>({
@@ -114,6 +142,22 @@ export const profileApi = deepRacerApi.injectEndpoints({
       transformResponse: updateGroupMembership.updateGroupMembershipTransformResponse,
       invalidatesTags: [{ type: DeepRacerApiQueryTagType.PROFILE }],
     }),
+    batchCreateProfiles: build.mutation<
+      Pick<BatchCreateProfilesCommandOutput, 'summary' | 'results'>,
+      BatchCreateProfilesCommandInput
+    >({
+      query: batchCreateProfiles.batchCreateProfilesCommand,
+      transformResponse: batchCreateProfiles.batchCreateProfilesTransformResponse,
+      invalidatesTags: [{ type: DeepRacerApiQueryTagType.PROFILE }],
+    }),
+    batchUpdateProfiles: build.mutation<
+      Pick<BatchUpdateProfilesCommandOutput, 'summary' | 'results'>,
+      BatchUpdateProfilesCommandInput
+    >({
+      query: batchUpdateProfiles.batchUpdateProfilesCommand,
+      transformResponse: batchUpdateProfiles.batchUpdateProfilesTransformResponse,
+      invalidatesTags: [{ type: DeepRacerApiQueryTagType.PROFILE }],
+    }),
   }),
 });
 
@@ -125,4 +169,6 @@ export const {
   useDeleteProfileMutation,
   useDeleteProfileModelsMutation,
   useUpdateGroupMembershipMutation,
+  useBatchCreateProfilesMutation,
+  useBatchUpdateProfilesMutation,
 } = profileApi;

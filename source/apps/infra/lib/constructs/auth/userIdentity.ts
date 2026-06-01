@@ -308,7 +308,7 @@ export class UserIdentity extends Construct {
     // Add permissions to post confirmation function to manage user groups
     postConfirmationFn.addToRolePolicy(
       new PolicyStatement({
-        actions: ['cognito-idp:AdminAddUserToGroup'],
+        actions: ['cognito-idp:AdminAddUserToGroup', 'cognito-idp:AdminListGroupsForUser'],
         resources: [
           `arn:${Stack.of(this).partition}:cognito-idp:${Stack.of(this).region}:${Stack.of(this).account}:userpool/${Stack.of(this).region}_*`,
         ],

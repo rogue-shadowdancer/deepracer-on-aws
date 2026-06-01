@@ -19,6 +19,7 @@ const mockData = {
   'usageQuotas.global.globalModelCountLimit': '100',
   'usageQuotas.newUser.newUserComputeMinutesLimit': '30',
   'usageQuotas.newUser.newUserModelCountLimit': '10',
+  'registration.type': 'invite-only',
 };
 
 beforeEach(() => {
@@ -144,6 +145,27 @@ describe('UsageSummary', () => {
   it('displays "Invite only" for registration mode', () => {
     render(<UsageSummary profiles={[]} />);
     expect(screen.getByText('Invite only')).toBeInTheDocument();
+  });
+
+  it('displays "Self service" for self-service registration mode', () => {
+    (useGetGlobalSettingQuery as Mock).mockImplementation(({ key }: { key: string }) => {
+      if (key === 'registration.type') {
+        return {
+          data: 'self-service',
+          isLoading: false,
+          error: null,
+        };
+      }
+
+      return {
+        data: mockData[key as keyof typeof mockData] || '60',
+        isLoading: false,
+        error: null,
+      };
+    });
+
+    render(<UsageSummary profiles={[]} />);
+    expect(screen.getByText('Self service')).toBeInTheDocument();
   });
 
   it('displays correct new user compute usage limit', () => {
