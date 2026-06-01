@@ -21,7 +21,11 @@ import {
   GetProfileCommandOutput,
   ListProfilesCommand,
   ListProfilesCommandOutput,
+  PreviewProfileSyncCommand,
+  PreviewProfileSyncCommandOutput,
   Profile,
+  SyncProfilesCommand,
+  SyncProfilesCommandOutput,
   UpdateGroupMembershipCommand,
   UpdateGroupMembershipCommandInput,
   UpdateGroupMembershipCommandOutput,
@@ -102,6 +106,28 @@ export const batchUpdateProfiles = {
   }),
 };
 
+export const previewProfileSync = {
+  previewProfileSyncCommand: () => ({
+    command: new PreviewProfileSyncCommand(),
+    displayNotificationOnError: false,
+  }),
+  previewProfileSyncTransformResponse: (response: PreviewProfileSyncCommandOutput) => ({
+    summary: response.summary,
+    results: response.results,
+  }),
+};
+
+export const syncProfiles = {
+  syncProfilesCommand: () => ({
+    command: new SyncProfilesCommand(),
+    displayNotificationOnError: false,
+  }),
+  syncProfilesTransformResponse: (response: SyncProfilesCommandOutput) => ({
+    summary: response.summary,
+    results: response.results,
+  }),
+};
+
 export const profileApi = deepRacerApi.injectEndpoints({
   endpoints: (build) => ({
     createProfile: build.mutation<string, CreateProfileCommandInput>({
@@ -158,6 +184,16 @@ export const profileApi = deepRacerApi.injectEndpoints({
       transformResponse: batchUpdateProfiles.batchUpdateProfilesTransformResponse,
       invalidatesTags: [{ type: DeepRacerApiQueryTagType.PROFILE }],
     }),
+    previewProfileSync: build.query<Pick<PreviewProfileSyncCommandOutput, 'summary' | 'results'>, void>({
+      query: previewProfileSync.previewProfileSyncCommand,
+      transformResponse: previewProfileSync.previewProfileSyncTransformResponse,
+      providesTags: [{ type: DeepRacerApiQueryTagType.PROFILE }],
+    }),
+    syncProfiles: build.mutation<Pick<SyncProfilesCommandOutput, 'summary' | 'results'>, void>({
+      query: syncProfiles.syncProfilesCommand,
+      transformResponse: syncProfiles.syncProfilesTransformResponse,
+      invalidatesTags: [{ type: DeepRacerApiQueryTagType.PROFILE }],
+    }),
   }),
 });
 
@@ -171,4 +207,6 @@ export const {
   useUpdateGroupMembershipMutation,
   useBatchCreateProfilesMutation,
   useBatchUpdateProfilesMutation,
+  usePreviewProfileSyncQuery,
+  useSyncProfilesMutation,
 } = profileApi;

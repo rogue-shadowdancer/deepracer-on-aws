@@ -75,6 +75,8 @@ export class Api extends Construct {
     const apiHandlerEntryPoints = {
       BatchCreateProfiles: 'api/handlers/batchCreateProfiles',
       BatchUpdateProfiles: 'api/handlers/batchUpdateProfiles',
+      PreviewProfileSync: 'api/handlers/previewProfileSync',
+      SyncProfiles: 'api/handlers/syncProfiles',
       UpdateGroupMembership: 'api/handlers/updateGroupMembership',
       CreateEvaluation: 'api/handlers/createEvaluation',
       CreateLeaderboard: 'api/handlers/createLeaderboard',
@@ -162,12 +164,23 @@ export class Api extends Construct {
       }),
     );
 
+    const profileSyncFunctions = [functions.PreviewProfileSync, functions.SyncProfiles];
+    profileSyncFunctions.forEach((fn) =>
+      fn.addToRolePolicy(
+        new PolicyStatement({
+          actions: ['cognito-idp:AdminGetUser', 'cognito-idp:AdminListGroupsForUser'],
+          resources: [props.userPool.userPoolArn],
+        }),
+      ),
+    );
+
     const appConfigConsumers = [
       functions.CreateEvaluation,
       functions.CreateModel,
       functions.StopModel,
       functions.GetGlobalSetting,
       functions.UpdateGlobalSetting,
+      functions.SyncProfiles,
     ];
     appConfigConsumers.forEach((fn) => grantAppConfigAccess(this, fn, props.globalSettings));
 

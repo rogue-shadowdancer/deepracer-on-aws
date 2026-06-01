@@ -89,6 +89,8 @@ resource ProfileResource {
         CreateProfile
         BatchCreateProfiles
         BatchUpdateProfiles
+        PreviewProfileSync
+        SyncProfiles
         UpdateGroupMembership
         DeleteProfileModels
     ]

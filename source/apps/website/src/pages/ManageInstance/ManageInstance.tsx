@@ -9,7 +9,7 @@ import { Link } from 'react-router-dom';
 import { useGetProfileQuery, useListProfilesQuery } from '#services/deepRacer/profileApi.js';
 import { checkUserGroupMembership } from '#utils/authUtils.js';
 
-import { BatchInviteUsersModal, BatchUpdateUsersModal } from './BatchOperations';
+import { BatchInviteUsersModal, BatchUpdateUsersModal, SyncAwsUsersModal } from './BatchOperations';
 import ChangeUserRoleModal from './ChangeUserRoleModal';
 import DeleteUserModal from './DeleteUserModal';
 import DeleteUserModelsModal from './DeleteUserModelsModal';
@@ -28,6 +28,7 @@ const ManageInstance = () => {
   const [isInviteUserModalOpen, setIsInviteUserModalOpen] = useState<boolean>(false);
   const [isBatchInviteUsersModalOpen, setIsBatchInviteUsersModalOpen] = useState<boolean>(false);
   const [isBatchUpdateUsersModalOpen, setIsBatchUpdateUsersModalOpen] = useState<boolean>(false);
+  const [isSyncAwsUsersModalOpen, setIsSyncAwsUsersModalOpen] = useState<boolean>(false);
   const [isDeleteUserModalOpen, setIsDeleteUserModalOpen] = useState<boolean>(false);
   const [isDeleteUserModelsModalOpen, setIsDeleteUserModelsModalOpen] = useState<boolean>(false);
   const [isUserQuotasModalOpen, setIsUserQuotasModalOpen] = useState<boolean>(false);
@@ -80,6 +81,7 @@ const ManageInstance = () => {
                   <Button onClick={() => setIsInstanceQuotasModalOpen(true)}>Instance quotas</Button>
                   <Button onClick={() => setIsNewUserQuotasModalOpen(true)}>New user quotas</Button>
                   <Button onClick={() => setIsBatchInviteUsersModalOpen(true)}>Batch invite users</Button>
+                  <Button onClick={() => setIsSyncAwsUsersModalOpen(true)}>Sync AWS users</Button>
                 </SpaceBetween>
               }
             >
@@ -125,6 +127,7 @@ const ManageInstance = () => {
       />
       <InviteUserModal isOpen={isInviteUserModalOpen} setIsOpen={setIsInviteUserModalOpen} />
       <BatchInviteUsersModal isOpen={isBatchInviteUsersModalOpen} setIsOpen={setIsBatchInviteUsersModalOpen} />
+      <SyncAwsUsersModal isOpen={isSyncAwsUsersModalOpen} setIsOpen={setIsSyncAwsUsersModalOpen} />
       <BatchUpdateUsersModal
         isOpen={isBatchUpdateUsersModalOpen}
         setIsOpen={setIsBatchUpdateUsersModalOpen}

@@ -41,6 +41,8 @@ export const withReactHookForm: Decorator = (Story, context) => {
 
   const handleSubmit = onSubmit ?? action('[React Hook Form] Submit');
   const handleError = onError ?? action('[React Hook Form] Error');
+  const isTestEnvironment =
+    typeof process !== 'undefined' && (process.env.NODE_ENV === 'test' || process.env.VITEST === 'true');
 
   return (
     <FormProvider {...formMethods}>
@@ -50,7 +52,7 @@ export const withReactHookForm: Decorator = (Story, context) => {
           <Button formAction="submit">Submit</Button>
         </SpaceBetween>
       </form>
-      <DevTool control={formMethods.control} />
+      {!isTestEnvironment && <DevTool control={formMethods.control} />}
     </FormProvider>
   );
 };

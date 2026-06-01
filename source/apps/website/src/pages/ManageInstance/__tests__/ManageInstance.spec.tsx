@@ -120,6 +120,12 @@ vi.mock('../BatchOperations', () => ({
       <button onClick={() => setIsOpen(false)}>Close</button>
     </div>
   ),
+  SyncAwsUsersModal: ({ isOpen, setIsOpen }: { isOpen: boolean; setIsOpen: (open: boolean) => void }) => (
+    <div data-testid="sync-aws-users-modal" data-is-open={isOpen}>
+      Sync AWS Users Modal
+      <button onClick={() => setIsOpen(false)}>Close</button>
+    </div>
+  ),
   BatchUpdateUsersModal: ({
     isOpen,
     setIsOpen,
@@ -410,6 +416,8 @@ describe('ManageInstance', () => {
 
     expect(screen.getByText('Instance quotas')).toBeInTheDocument();
     expect(screen.getByText('New user quotas')).toBeInTheDocument();
+    expect(screen.getByText('Batch invite users')).toBeInTheDocument();
+    expect(screen.getByText('Sync AWS users')).toBeInTheDocument();
   });
 
   it('should have Registration settings button disabled', async () => {
@@ -1272,6 +1280,30 @@ describe('ManageInstance', () => {
     await user.click(screen.getByText('Batch invite users'));
 
     expect(screen.getByTestId('batch-invite-users-modal')).toHaveAttribute('data-is-open', 'true');
+  });
+
+  it('should open SyncAwsUsersModal from the header action', async () => {
+    const user = userEvent.setup();
+
+    (fetchAuthSession as Mock).mockResolvedValue({
+      tokens: {
+        accessToken: {
+          payload: {
+            'cognito:groups': ['dr-admins'],
+          },
+        },
+      },
+    });
+
+    render(<ManageInstance />);
+
+    await waitFor(() => {
+      expect(screen.getByText('Instance management')).toBeInTheDocument();
+    });
+
+    await user.click(screen.getByText('Sync AWS users'));
+
+    expect(screen.getByTestId('sync-aws-users-modal')).toHaveAttribute('data-is-open', 'true');
   });
 
   it('should open BatchUpdateUsersModal with selected users from ProfilesTable', async () => {

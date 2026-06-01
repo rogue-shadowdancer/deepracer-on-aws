@@ -3,3 +3,4 @@
 
 export { default as BatchInviteUsersModal } from './BatchInviteUsersModal';
 export { default as BatchUpdateUsersModal } from './BatchUpdateUsersModal';
+export { default as SyncAwsUsersModal } from './SyncAwsUsersModal';

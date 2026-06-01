@@ -21,7 +21,12 @@ import {
   DeleteProfileModelsCommandOutput,
   ListProfilesCommand,
   ListProfilesCommandOutput,
+  PreviewProfileSyncCommand,
+  PreviewProfileSyncCommandOutput,
   Profile,
+  ProfileSyncOperationStatus,
+  SyncProfilesCommand,
+  SyncProfilesCommandOutput,
   UpdateGroupMembershipCommand,
   UpdateGroupMembershipCommandInput,
   UpdateGroupMembershipCommandOutput,
@@ -426,6 +431,102 @@ describe('profileApi', () => {
       expect(typeof profileApiModule.profileApi.useBatchCreateProfilesMutation).toBe('function');
       expect(profileApiModule.profileApi.useBatchUpdateProfilesMutation).toBeDefined();
       expect(typeof profileApiModule.profileApi.useBatchUpdateProfilesMutation).toBe('function');
+    });
+  });
+
+  describe('previewProfileSyncCommand', () => {
+    it('should create a PreviewProfileSyncCommand', () => {
+      const result = profileApiModule.previewProfileSync.previewProfileSyncCommand();
+
+      expect(result.command).toBeInstanceOf(PreviewProfileSyncCommand);
+      expect(result.displayNotificationOnError).toBe(false);
+    });
+  });
+
+  describe('previewProfileSyncTransformResponse', () => {
+    it('should transform response to summary and results', () => {
+      const mockResponse: PreviewProfileSyncCommandOutput = {
+        $metadata: {},
+        summary: {
+          total: 1,
+          unchanged: 0,
+          created: 1,
+          updated: 0,
+          skipped: 0,
+          failed: 0,
+        },
+        results: [
+          {
+            rowNumber: 1,
+            profileId: 'profile-1',
+            emailAddress: 'student@example.com',
+            status: ProfileSyncOperationStatus.CREATED,
+            message: 'Profile will be created.',
+          },
+        ],
+      };
+
+      const result = profileApiModule.previewProfileSync.previewProfileSyncTransformResponse(mockResponse);
+
+      expect(result).toEqual({
+        summary: mockResponse.summary,
+        results: mockResponse.results,
+      });
+    });
+  });
+
+  describe('syncProfilesCommand', () => {
+    it('should create a SyncProfilesCommand', () => {
+      const result = profileApiModule.syncProfiles.syncProfilesCommand();
+
+      expect(result.command).toBeInstanceOf(SyncProfilesCommand);
+      expect(result.displayNotificationOnError).toBe(false);
+    });
+  });
+
+  describe('syncProfilesTransformResponse', () => {
+    it('should transform response to summary and results', () => {
+      const mockResponse: SyncProfilesCommandOutput = {
+        $metadata: {},
+        summary: {
+          total: 1,
+          unchanged: 0,
+          created: 0,
+          updated: 1,
+          skipped: 0,
+          failed: 0,
+        },
+        results: [
+          {
+            rowNumber: 1,
+            profileId: 'profile-1',
+            emailAddress: 'student@example.com',
+            status: ProfileSyncOperationStatus.UPDATED,
+            message: 'Profile updated: role.',
+          },
+        ],
+      };
+
+      const result = profileApiModule.syncProfiles.syncProfilesTransformResponse(mockResponse);
+
+      expect(result).toEqual({
+        summary: mockResponse.summary,
+        results: mockResponse.results,
+      });
+    });
+  });
+
+  describe('profile sync endpoints', () => {
+    it('should define sync endpoints', () => {
+      expect(profileApiModule.profileApi.endpoints.previewProfileSync).toBeDefined();
+      expect(profileApiModule.profileApi.endpoints.syncProfiles).toBeDefined();
+    });
+
+    it('should export sync hooks', () => {
+      expect(profileApiModule.profileApi.usePreviewProfileSyncQuery).toBeDefined();
+      expect(typeof profileApiModule.profileApi.usePreviewProfileSyncQuery).toBe('function');
+      expect(profileApiModule.profileApi.useSyncProfilesMutation).toBeDefined();
+      expect(typeof profileApiModule.profileApi.useSyncProfilesMutation).toBe('function');
     });
   });
 
