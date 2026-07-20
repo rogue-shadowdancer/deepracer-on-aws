@@ -618,7 +618,7 @@ describe('Workflow', () => {
   });
 
   describe('SageMaker Instance Type Configuration', () => {
-    it('includes SAGEMAKER_INSTANCE_TYPE in job initializer environment when context is set', () => {
+    it('uses one SAGEMAKER_INSTANCE_TYPE context for job creation and quota lookup', () => {
       const customApp = new App({
         context: {
           SAGEMAKER_INSTANCE_TYPE: 'ml.g4dn.2xlarge',
@@ -653,6 +653,37 @@ describe('Workflow', () => {
           },
         });
       }).not.toThrow();
+
+      expect(() => {
+        template.hasResourceProperties('AWS::Lambda::Function', {
+          FunctionName: `${TEST_NAMESPACE}-DeepRacerIndyWorkflow-JobDispatcherFn`,
+          Environment: {
+            Variables: Match.objectLike({
+              SAGEMAKER_INSTANCE_TYPE: 'ml.g4dn.2xlarge',
+            }),
+          },
+        });
+      }).not.toThrow();
+    });
+
+    it('rejects an unsupported instance type during synthesis', () => {
+      const customApp = new App({ context: { SAGEMAKER_INSTANCE_TYPE: 'ml.m7i.2xlarge' } });
+      const customStack = new Stack(customApp, 'UnsupportedInstanceStack');
+      const customTable = new TableV2(customStack, 'TestTable', {
+        partitionKey: { name: 'pk', type: AttributeType.STRING },
+        sortKey: { name: 'sk', type: AttributeType.STRING },
+      });
+
+      expect(
+        () =>
+          new Workflow(customStack, 'TestWorkflow', {
+            dynamoDBTable: customTable,
+            modelStorageBucket: new Bucket(customStack, 'TestBucket'),
+            workflowJobQueue: new Queue(customStack, 'TestQueue'),
+            simAppRepositoryUri: 'test-repo-uri',
+            namespace: TEST_NAMESPACE,
+          }),
+      ).toThrow('Unsupported SageMaker training instance type: ml.m7i.2xlarge');
     });
   });
 

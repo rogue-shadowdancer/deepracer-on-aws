@@ -1,6 +1,8 @@
 // Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 // SPDX-License-Identifier: Apache-2.0
 
+import { deepRacerIndyAppConfig } from '@deepracer-indy/config';
+import { parseSupportedTrainingInstanceType } from '@deepracer-indy/config/src/types/sageMakerConfig';
 import { CfnCondition, Duration, Fn, IResolveContext, Lazy, Stack } from 'aws-cdk-lib';
 import { SpecRestApi } from 'aws-cdk-lib/aws-apigateway';
 import {
@@ -67,6 +69,10 @@ export class MonitoringDashboard extends Construct {
     super(scope, id);
 
     const region = Stack.of(this).region;
+    const configuredSageMakerInstanceType = scope.node.tryGetContext('SAGEMAKER_INSTANCE_TYPE');
+    const sageMakerInstanceType = configuredSageMakerInstanceType
+      ? parseSupportedTrainingInstanceType(configuredSageMakerInstanceType)
+      : deepRacerIndyAppConfig.sageMaker.instanceType;
 
     this.dashboard = new Dashboard(this, 'Dashboard', {
       dashboardName: `${props.namespace}-deepracer-monitoring-${region}`,
@@ -107,22 +113,22 @@ export class MonitoringDashboard extends Construct {
         new TextWidget({
           markdown:
             '## Training Instance Usage\n\n' +
-            'Current ml.c7i.4xlarge training job usage. ' +
-            '[View quota limits and utilization](https://console.aws.amazon.com/servicequotas/home/services/sagemaker/quotas/L-1EC4D7FD)',
+            `Current ${sageMakerInstanceType} training job usage. ` +
+            '[View quota limits and utilization](https://console.aws.amazon.com/servicequotas/home/services/sagemaker/quotas)',
           width: 24,
           height: 2,
         }),
       ),
       new Row(
         new GraphWidget({
-          title: 'ml.c7i.4xlarge Training Jobs In Use',
+          title: `${sageMakerInstanceType} Training Jobs In Use`,
           left: [
             new Metric({
               namespace: 'AWS/Usage',
               metricName: 'ResourceCount',
               dimensionsMap: {
                 Type: 'Resource',
-                Resource: 'training-job/ml.c7i.4xlarge',
+                Resource: `training-job/${sageMakerInstanceType}`,
                 Service: 'SageMaker',
                 Class: 'None',
               },

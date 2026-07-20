@@ -12,7 +12,7 @@ import { TEST_NAMESPACE } from '../../../constants/testConstants.js';
 import { createNodeLambdaFunctionMock, createLogGroupsHelperMock } from '../../../constants/testMocks.js';
 import { functionNamePrefix } from '../../common/nodeLambdaFunction.js';
 import { GlobalSettings } from '../../storage/appConfig.js';
-import { BASE_IDENTITY_POOL_NAME, UserIdentity } from '../userIdentity';
+import { BASE_IDENTITY_POOL_NAME, getUserPoolMfaConfiguration, UserIdentity } from '../userIdentity';
 
 // Mock the LogGroupsHelper to avoid having the static log groups shared between stacks
 vi.mock('../../common/logGroupsHelper.js', () => createLogGroupsHelperMock());
@@ -21,7 +21,15 @@ vi.mock('../../common/logGroupsHelper.js', () => createLogGroupsHelperMock());
 vi.mock('../../common/nodeLambdaFunction.js', () => createNodeLambdaFunctionMock());
 
 describe('UserIdentity', () => {
-  const createTestStack = () => {
+  it('maps MFA configuration to OFF or optional TOTP only', () => {
+    expect(getUserPoolMfaConfiguration(false)).toMatchObject({ mfa: 'OFF' });
+    expect(getUserPoolMfaConfiguration(true)).toMatchObject({
+      mfa: 'OPTIONAL',
+      mfaSecondFactor: { otp: true, sms: false },
+    });
+  });
+
+  const createTestStack = (userPoolFeatures?: { enableMFA: boolean; enableSignups: boolean }) => {
     const app = new App();
     const stack = new Stack(app, 'TestStack');
 
@@ -40,6 +48,7 @@ describe('UserIdentity', () => {
       dynamoDBTable: table,
       globalSettings: mockGlobalSettings,
       namespace: TEST_NAMESPACE,
+      userPoolFeatures,
     });
 
     return Template.fromStack(stack);
@@ -68,6 +77,21 @@ describe('UserIdentity', () => {
         AdminCreateUserConfig: {
           AllowAdminCreateUserOnly: true,
         },
+        MfaConfiguration: 'OFF',
+      }),
+    ).not.toThrow();
+  });
+
+  it('synthesizes optional TOTP MFA and self-signup when enabled', () => {
+    const template = createTestStack({ enableMFA: true, enableSignups: true });
+
+    expect(() =>
+      template.hasResourceProperties('AWS::Cognito::UserPool', {
+        AdminCreateUserConfig: {
+          AllowAdminCreateUserOnly: false,
+        },
+        EnabledMfas: ['SOFTWARE_TOKEN_MFA'],
+        MfaConfiguration: 'OPTIONAL',
       }),
     ).not.toThrow();
   });
@@ -449,7 +473,7 @@ describe('UserIdentity', () => {
         PolicyDocument: {
           Statement: Match.arrayWith([
             {
-              Action: 'cognito-idp:AdminAddUserToGroup',
+              Action: ['cognito-idp:AdminAddUserToGroup', 'cognito-idp:AdminListGroupsForUser'],
               Effect: 'Allow',
               Resource: Match.anyValue(),
             },

@@ -2,11 +2,11 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { TrainingJobStatus } from '@aws-sdk/client-sagemaker';
-import { DeepRacerIndyAppConfig } from '@deepracer-indy/config/src/types/appConfig';
+import type { SupportedTrainingInstanceType } from '@deepracer-indy/config/src/types/sageMakerConfig';
 
 export const SAGEMAKER_COMPLETED_JOB_STATUSES: string[] = [TrainingJobStatus.COMPLETED, TrainingJobStatus.STOPPED];
 
-export const TrainingInstanceQuotaCode: { [T in DeepRacerIndyAppConfig['sageMaker']['instanceType']]: string } = {
+export const TrainingInstanceQuotaCode: Record<SupportedTrainingInstanceType, string> = {
   'ml.c4.2xlarge': 'L-C5B4EE09',
   'ml.c4.4xlarge': 'L-505634D0',
   'ml.c4.8xlarge': 'L-6BE85179',
@@ -29,7 +29,6 @@ export const TrainingInstanceQuotaCode: { [T in DeepRacerIndyAppConfig['sageMake
   'ml.c6i.4xlarge': 'L-4A20E33E',
   'ml.c6i.8xlarge': 'L-845DE61C',
   'ml.c6i.xlarge': 'L-D526E050',
-  // @ts-expect-error ml.c7i.4xlarge is a valid SageMaker instance type but not yet in the installed @aws-sdk/client-sagemaker@3.654.0 type definitions.
   'ml.c7i.4xlarge': 'L-1EC4D7FD',
   'ml.g4dn.12xlarge': 'L-7BD2C9FA',
   'ml.g4dn.16xlarge': 'L-57998C77',

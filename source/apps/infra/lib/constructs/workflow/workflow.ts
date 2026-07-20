@@ -4,6 +4,7 @@
 import path from 'node:path';
 
 import { TrainingJobStatus } from '@aws-sdk/client-sagemaker';
+import { parseSupportedTrainingInstanceType } from '@deepracer-indy/config/src/types/sageMakerConfig';
 import { Duration, Stack } from 'aws-cdk-lib';
 import { TableV2 } from 'aws-cdk-lib/aws-dynamodb';
 import { ManagedPolicy, Policy, PolicyDocument, PolicyStatement, Role, ServicePrincipal } from 'aws-cdk-lib/aws-iam';
@@ -47,6 +48,10 @@ export class Workflow extends Construct {
     const { dynamoDBTable, modelStorageBucket, workflowJobQueue, simAppRepositoryUri, namespace } = props;
     const region = Stack.of(this).region;
     const account = Stack.of(this).account;
+    const configuredSageMakerInstanceType = scope.node.tryGetContext('SAGEMAKER_INSTANCE_TYPE');
+    const sageMakerInstanceType = configuredSageMakerInstanceType
+      ? parseSupportedTrainingInstanceType(configuredSageMakerInstanceType)
+      : '';
 
     const sageMakerRole = new Role(this, 'SageMakerRole', {
       assumedBy: new ServicePrincipal('sagemaker.amazonaws.com'),
@@ -141,7 +146,7 @@ export class Workflow extends Construct {
         SAGEMAKER_ROLE_ARN: sageMakerRole.roleArn,
         SAGEMAKER_TRAINING_IMAGE: simAppRepositoryUri,
         POWERTOOLS_METRICS_NAMESPACE: 'DeepRacerIndyWorkflow',
-        SAGEMAKER_INSTANCE_TYPE: scope.node.tryGetContext('SAGEMAKER_INSTANCE_TYPE') ?? '',
+        SAGEMAKER_INSTANCE_TYPE: sageMakerInstanceType,
       },
     });
 
@@ -348,6 +353,7 @@ export class Workflow extends Construct {
         WORKFLOW_STATE_MACHINE_ARN: workflow.stateMachineArn,
         WORKFLOW_JOB_QUEUE_URL: workflowJobQueue.queueUrl,
         POWERTOOLS_METRICS_NAMESPACE: 'DeepRacerIndyWorkflow',
+        SAGEMAKER_INSTANCE_TYPE: sageMakerInstanceType,
       },
       memorySize: 256,
       role: jobDispatcherRole,

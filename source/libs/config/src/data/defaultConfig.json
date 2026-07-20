@@ -1,0 +1,22 @@
+{
+  "$schema": "./defaultConfig.schema.json",
+  "version": 1,
+  "common": {
+    "defaultNamespace": "default",
+    "minEvaluationTrials": 5
+  },
+  "dynamoDB": {
+    "baseTableName": "DeepRacerIndy.Main",
+    "resourceIdLength": 15
+  },
+  "sageMaker": {
+    "instanceCount": 1,
+    "instanceType": "ml.c7i.4xlarge",
+    "instanceVolumeSizeInGB": 100
+  },
+  "userPool": {
+    "baseName": "DeepRacerIndyUserPool",
+    "enableMFA": false,
+    "enableSignups": false
+  }
+}

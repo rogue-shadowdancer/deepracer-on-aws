@@ -8,12 +8,15 @@ import {
   StopTrainingJobCommand,
   TrainingJobStatus,
 } from '@aws-sdk/client-sagemaker';
+import { SUPPORTED_TRAINING_INSTANCE_TYPES } from '@deepracer-indy/config/src/types/sageMakerConfig';
 import { TEST_TRAINING_ITEM, TEST_MODEL_ITEM } from '@deepracer-indy/database';
 import { mockClient } from 'aws-sdk-client-mock';
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
+import { TrainingInstanceQuotaCode } from '../../constants/sageMaker.js';
 import { SageMakerHyperparameters } from '../../types/sageMakerHyperparameters.js';
 import { sageMakerHelper } from '../SageMakerHelper.js';
+import { serviceQuotasHelper } from '../ServiceQuotasHelper.js';
 
 describe('SageMakerHelper', () => {
   const mockSageMakerClient = mockClient(SageMakerClient);
@@ -24,6 +27,12 @@ describe('SageMakerHelper', () => {
     // Set required environment variables
     process.env.SAGEMAKER_TRAINING_IMAGE =
       '123456789012.dkr.ecr.us-east-1.amazonaws.com/deepracer-on-aws-sim-app:latest';
+  });
+
+  afterEach(() => {
+    delete process.env.DEPLOYMENT_MODE;
+    delete process.env.SAGEMAKER_INSTANCE_TYPE;
+    vi.restoreAllMocks();
   });
 
   describe('createTrainingJob()', () => {
@@ -65,6 +74,30 @@ describe('SageMakerHelper', () => {
       expect(calls[0].args[0].input.ResourceConfig?.InstanceType).toBe('ml.g4dn.2xlarge');
 
       delete process.env.SAGEMAKER_INSTANCE_TYPE;
+    });
+
+    it('uses the same SAGEMAKER_INSTANCE_TYPE override for quota lookup', async () => {
+      process.env.SAGEMAKER_INSTANCE_TYPE = 'ml.g4dn.2xlarge';
+      const quotaSpy = vi.spyOn(serviceQuotasHelper, 'getServiceQuota').mockResolvedValueOnce({ Value: 4 });
+
+      await expect(sageMakerHelper.getTrainingInstanceQuota()).resolves.toBe(4);
+      expect(quotaSpy).toHaveBeenCalledWith('sagemaker', 'L-C2495BC4');
+
+      delete process.env.SAGEMAKER_INSTANCE_TYPE;
+    });
+
+    it('keeps every accepted training instance mapped to a quota code', () => {
+      expect(Object.keys(TrainingInstanceQuotaCode).sort()).toEqual([...SUPPORTED_TRAINING_INSTANCE_TYPES].sort());
+    });
+
+    it('rejects an unsupported override before calling Service Quotas', async () => {
+      process.env.SAGEMAKER_INSTANCE_TYPE = 'ml.m7i.2xlarge';
+      const quotaSpy = vi.spyOn(serviceQuotasHelper, 'getServiceQuota');
+
+      await expect(sageMakerHelper.getTrainingInstanceQuota()).rejects.toThrow(
+        'Unsupported SageMaker training instance type: ml.m7i.2xlarge',
+      );
+      expect(quotaSpy).not.toHaveBeenCalled();
     });
 
     it('should enable RemoteDebugConfig when DEPLOYMENT_MODE is dev', async () => {

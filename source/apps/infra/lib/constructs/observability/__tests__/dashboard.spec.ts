@@ -56,6 +56,43 @@ describe('MonitoringDashboard', () => {
     });
   });
 
+  it('uses the final SageMaker instance type in usage widgets', () => {
+    const customApp = new App({ context: { SAGEMAKER_INSTANCE_TYPE: 'ml.g4dn.2xlarge' } });
+    const customStack = new Stack(customApp, 'CustomStack');
+    const api = createTestApi(customStack, 'TestApi');
+    const table = new TableV2(customStack, 'TestTable', {
+      partitionKey: { name: 'pk', type: AttributeType.STRING },
+    });
+
+    new MonitoringDashboard(customStack, 'TestDashboard', {
+      namespace: TEST_NAMESPACE,
+      api,
+      dynamoDBTable: table,
+    });
+
+    const dashboards = Template.fromStack(customStack).findResources('AWS::CloudWatch::Dashboard');
+    const synthesized = JSON.stringify(dashboards);
+    expect(synthesized).toContain('ml.g4dn.2xlarge Training Jobs In Use');
+    expect(synthesized).toContain('training-job/ml.g4dn.2xlarge');
+    expect(synthesized).not.toContain('ml.c7i.4xlarge');
+  });
+
+  it('rejects an unsupported SageMaker instance type during synthesis', () => {
+    const customApp = new App({ context: { SAGEMAKER_INSTANCE_TYPE: 'ml.m7i.2xlarge' } });
+    const customStack = new Stack(customApp, 'UnsupportedInstanceStack');
+
+    expect(
+      () =>
+        new MonitoringDashboard(customStack, 'TestDashboard', {
+          namespace: TEST_NAMESPACE,
+          api: createTestApi(customStack, 'TestApi'),
+          dynamoDBTable: new TableV2(customStack, 'TestTable', {
+            partitionKey: { name: 'pk', type: AttributeType.STRING },
+          }),
+        }),
+    ).toThrow('Unsupported SageMaker training instance type: ml.m7i.2xlarge');
+  });
+
   it('should include alarm status widget when alarms are provided', () => {
     const api = createTestApi(stack, 'TestApi');
     const table = new TableV2(stack, 'TestTable', {

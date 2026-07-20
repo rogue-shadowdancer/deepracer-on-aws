@@ -14,6 +14,7 @@ import {
   paginateListTrainingJobs,
 } from '@aws-sdk/client-sagemaker';
 import { deepRacerIndyAppConfig } from '@deepracer-indy/config';
+import { parseSupportedTrainingInstanceType } from '@deepracer-indy/config/src/types/sageMakerConfig';
 import { JobItem, JobName, ModelItem, jobNameHelper, modelDao } from '@deepracer-indy/database';
 import { InternalFailureError, TrackDirection } from '@deepracer-indy/typescript-server-client';
 import { logMethod, AmazonS3URI, logger, waitForAll } from '@deepracer-indy/utils';
@@ -25,6 +26,11 @@ import { SimulationLaunchFile } from '../constants/simulation.js';
 import type { SageMakerHyperparameters } from '../types/sageMakerHyperparameters.js';
 
 class SageMakerHelper {
+  private getEffectiveTrainingInstanceType(): TrainingInstanceType {
+    const instanceType = process.env.SAGEMAKER_INSTANCE_TYPE || deepRacerIndyAppConfig.sageMaker.instanceType;
+    return parseSupportedTrainingInstanceType(instanceType) as TrainingInstanceType;
+  }
+
   @logMethod
   async createTrainingJob({ jobItem, modelItem }: { jobItem: JobItem; modelItem: ModelItem }) {
     // TODO: metrics handling
@@ -48,8 +54,7 @@ class SageMakerHelper {
         },
         ResourceConfig: {
           InstanceCount: deepRacerIndyAppConfig.sageMaker.instanceCount,
-          InstanceType: (process.env.SAGEMAKER_INSTANCE_TYPE ||
-            deepRacerIndyAppConfig.sageMaker.instanceType) as TrainingInstanceType,
+          InstanceType: this.getEffectiveTrainingInstanceType(),
           VolumeSizeInGB: deepRacerIndyAppConfig.sageMaker.instanceVolumeSizeInGB,
         },
         StoppingCondition: {
@@ -219,14 +224,13 @@ class SageMakerHelper {
   }
 
   async getTrainingInstanceQuota() {
+    const instanceType = this.getEffectiveTrainingInstanceType();
     const instanceQuota = await serviceQuotasHelper.getServiceQuota(
       'sagemaker',
-      TrainingInstanceQuotaCode[deepRacerIndyAppConfig.sageMaker.instanceType],
+      TrainingInstanceQuotaCode[instanceType as keyof typeof TrainingInstanceQuotaCode],
     );
 
-    logger.info(
-      `SageMaker ${deepRacerIndyAppConfig.sageMaker.instanceType} training instance quota is set to ${instanceQuota.Value}`,
-    );
+    logger.info(`SageMaker ${instanceType} training instance quota is set to ${instanceQuota.Value}`);
 
     return instanceQuota.Value as number;
   }

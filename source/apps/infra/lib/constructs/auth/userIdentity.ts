@@ -27,6 +27,7 @@ import {
 } from 'aws-cdk-lib/aws-cloudwatch';
 import {
   UserPool,
+  Mfa,
   IUserPool,
   UserPoolClient,
   CfnUserPool,
@@ -46,6 +47,18 @@ import { functionNamePrefix, NodeLambdaFunction } from '../common/nodeLambdaFunc
 import { grantAppConfigAccess } from '../common/permissionsHelper.js';
 import { GlobalSettings } from '../storage/appConfig.js';
 
+export function getUserPoolMfaConfiguration(enableMFA: boolean) {
+  return enableMFA
+    ? {
+        mfa: Mfa.OPTIONAL,
+        mfaSecondFactor: {
+          otp: true,
+          sms: false,
+        },
+      }
+    : { mfa: Mfa.OFF };
+}
+
 export interface UserRoles {
   adminRole: Role;
   raceFacilitatorRole: Role;
@@ -59,6 +72,11 @@ export interface UserIdentityProps {
   namespace: string;
   isSesEnabled?: CfnCondition;
   sesVerifiedEmail?: string;
+  /** Optional feature overrides used by deployment configuration and template tests. */
+  userPoolFeatures?: {
+    enableMFA: boolean;
+    enableSignups: boolean;
+  };
 }
 
 export const BASE_IDENTITY_POOL_NAME = 'dr-idp';
@@ -83,6 +101,7 @@ export class UserIdentity extends Construct {
     super(scope, id);
 
     const { dynamoDBTable, globalSettings, adminEmail, namespace } = props;
+    const userPoolFeatures = props.userPoolFeatures ?? deepRacerIndyAppConfig.userPool;
     this.namespace = namespace;
     this.sesAlarms = [];
 
@@ -168,7 +187,8 @@ export class UserIdentity extends Construct {
         requireUppercase: true,
         minLength: 8,
       },
-      selfSignUpEnabled: deepRacerIndyAppConfig.userPool.enableSignups,
+      selfSignUpEnabled: userPoolFeatures.enableSignups,
+      ...getUserPoolMfaConfiguration(userPoolFeatures.enableMFA),
       userInvitation: {
         emailSubject: 'Welcome to DeepRacer on AWS',
         emailBody:

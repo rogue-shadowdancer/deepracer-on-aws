@@ -4,12 +4,13 @@
 import type { DeepRacerIndyDynamoDBConfig } from '#types/dynamoDBConfig.js';
 
 import { DEFAULT_NAMESPACE } from './commonDefaults.js';
+import { defaultConfig } from './defaultConfig.js';
 
-export const BASE_TABLE_NAME = 'DeepRacerIndy.Main';
+export const BASE_TABLE_NAME = defaultConfig.dynamoDB.baseTableName;
 
 const namespace = (typeof process !== 'undefined' && process.env?.NAMESPACE) || DEFAULT_NAMESPACE;
 
 export const dynamoDBDefaults = {
   tableName: `${namespace}-${BASE_TABLE_NAME}`,
-  resourceIdLength: 15,
+  resourceIdLength: defaultConfig.dynamoDB.resourceIdLength,
 } as const satisfies DeepRacerIndyDynamoDBConfig;

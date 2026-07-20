@@ -3,9 +3,10 @@
 
 import type { DeepRacerIndySageMakerConfig } from '#types/sageMakerConfig.js';
 
+import { defaultConfig } from './defaultConfig.js';
+
 export const sageMakerDefaults: DeepRacerIndySageMakerConfig = {
-  instanceCount: 1,
-  // @ts-expect-error ml.c7i.4xlarge is a valid SageMaker instance type but not yet in the installed @aws-sdk/client-sagemaker@3.654.0 type definitions.
-  instanceType: 'ml.c7i.4xlarge',
-  instanceVolumeSizeInGB: 100,
+  instanceCount: defaultConfig.sageMaker.instanceCount,
+  instanceType: defaultConfig.sageMaker.instanceType as DeepRacerIndySageMakerConfig['instanceType'],
+  instanceVolumeSizeInGB: defaultConfig.sageMaker.instanceVolumeSizeInGB,
 };
