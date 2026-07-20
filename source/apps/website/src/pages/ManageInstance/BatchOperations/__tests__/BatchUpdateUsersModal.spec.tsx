@@ -63,6 +63,42 @@ describe('BatchUpdateUsersModal', () => {
     expect(mockBatchUpdateProfiles).not.toHaveBeenCalled();
   });
 
+  it('rejects a blank usage limit when usage updates are enabled', async () => {
+    const user = userEvent.setup();
+    render(
+      <BatchUpdateUsersModal
+        isOpen={true}
+        setIsOpen={mockSetIsOpen}
+        selectedUsers={selectedUsers}
+        onClearSelection={mockOnClearSelection}
+      />,
+    );
+
+    await user.click(screen.getByText('Update usage limit'));
+    await user.click(screen.getByText('Update 2 users'));
+
+    expect(await screen.findByText('Usage limit must be -1 or a non-negative number of hours.')).toBeInTheDocument();
+    expect(mockBatchUpdateProfiles).not.toHaveBeenCalled();
+  });
+
+  it('rejects a blank model limit when model updates are enabled', async () => {
+    const user = userEvent.setup();
+    render(
+      <BatchUpdateUsersModal
+        isOpen={true}
+        setIsOpen={mockSetIsOpen}
+        selectedUsers={selectedUsers}
+        onClearSelection={mockOnClearSelection}
+      />,
+    );
+
+    await user.click(screen.getByText('Update model limit'));
+    await user.click(screen.getByText('Update 2 users'));
+
+    expect(await screen.findByText('Model limit must be -1 or a non-negative integer.')).toBeInTheDocument();
+    expect(mockBatchUpdateProfiles).not.toHaveBeenCalled();
+  });
+
   it('submits quota updates for selected users and clears selection on full success', async () => {
     const user = userEvent.setup();
     mockBatchUpdateProfiles.mockReturnValue({

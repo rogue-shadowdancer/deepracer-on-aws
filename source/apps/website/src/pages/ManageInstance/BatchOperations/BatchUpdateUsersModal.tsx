@@ -167,6 +167,9 @@ const BatchUpdateUsersModal = ({ isOpen, setIsOpen, selectedUsers, onClearSelect
 };
 
 function parseUsageHours(value: string) {
+  if (value.trim() === '') {
+    return undefined;
+  }
   const numericValue = Number(value);
   if (!Number.isFinite(numericValue) || numericValue < -1) {
     return undefined;
@@ -175,6 +178,9 @@ function parseUsageHours(value: string) {
 }
 
 function parseModelLimit(value: string) {
+  if (value.trim() === '') {
+    return undefined;
+  }
   const numericValue = Number(value);
   if (!Number.isInteger(numericValue) || numericValue < -1) {
     return undefined;
